@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Secure full-stack demo application for academic analysis of AI-generated code and risk management."
+    />
+    <title>GameVault</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-variant": "#d9dde0",
+              "surface-bright": "#f5f7f9",
+              "on-tertiary-fixed-variant": "#6e1354",
+              "surface-container": "#e5e9eb",
+              "secondary": "#5e4ab3",
+              "on-primary-fixed": "#000000",
+              "on-secondary-fixed-variant": "#533ea7",
+              "primary-dim": "#3939c7",
+              "tertiary": "#963776",
+              "secondary-container": "#d6cbff",
+              "secondary-fixed-dim": "#c8bbff",
+              "on-primary": "#f4f1ff",
+              "surface-dim": "#d0d5d8",
+              "surface-container-low": "#eef1f3",
+              "on-primary-container": "#0a0081",
+              "inverse-on-surface": "#9a9d9f",
+              "on-secondary-fixed": "#361c89",
+              "on-error-container": "#510017",
+              "primary": "#4647d3",
+              "error": "#b41340",
+              "on-surface": "#2c2f31",
+              "on-tertiary-container": "#63054a",
+              "secondary-fixed": "#d6cbff",
+              "tertiary-fixed": "#ff8ed2",
+              "inverse-primary": "#8083ff",
+              "tertiary-fixed-dim": "#ef81c4",
+              "error-dim": "#a70138",
+              "on-surface-variant": "#595c5e",
+              "primary-fixed": "#9396ff",
+              "primary-container": "#9396ff",
+              "outline-variant": "#abadaf",
+              "on-secondary": "#f6f0ff",
+              "on-secondary-container": "#4a349d",
+              "on-background": "#2c2f31",
+              "tertiary-dim": "#882a69",
+              "surface-container-lowest": "#ffffff",
+              "secondary-dim": "#523da6",
+              "background": "#f5f7f9",
+              "on-primary-fixed-variant": "#0e009d",
+              "outline": "#747779",
+              "surface": "#f5f7f9",
+              "error-container": "#f74b6d",
+              "primary-fixed-dim": "#8387ff",
+              "inverse-surface": "#0b0f10",
+              "surface-container-highest": "#d9dde0",
+              "surface-container-high": "#dfe3e6",
+              "tertiary-container": "#ff8ed2",
+              "on-tertiary-fixed": "#3b002b",
+              "surface-tint": "#4647d3",
+              "on-error": "#ffefef",
+              "on-tertiary": "#ffeef4"
+            },
+            borderRadius: {
+              DEFAULT: "0.25rem",
+              lg: "0.5rem",
+              xl: "0.75rem",
+              "2xl": "1rem",
+              "3xl": "1.5rem",
+              full: "9999px"
+            },
+            fontFamily: {
+              headline: ["Plus Jakarta Sans", "sans-serif"],
+              body: ["Inter", "sans-serif"],
+              label: ["Inter", "sans-serif"]
+            }
+          }
+        }
+      };
+    </script>
+  </head>
+  <body class="bg-surface font-body text-on-surface antialiased">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

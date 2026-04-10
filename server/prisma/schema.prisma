@@ -1,0 +1,181 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  USER
+}
+
+enum Genre {
+  ACTION
+  RPG
+  STRATEGY
+  SPORTS
+  HORROR
+  ADVENTURE
+  PUZZLE
+  SIMULATION
+}
+
+enum OrderStatus {
+  PENDING
+  SHIPPED
+  COMPLETED
+  CANCELLED
+}
+
+model User {
+  id              String     @id @default(cuid())
+  email           String     @unique
+  fullName        String
+  passwordHash    String
+  role            Role       @default(USER)
+  sessions        Session[]
+  orders          Order[]
+  reviews         Review[]
+  actorAuditLogs  AuditLog[] @relation("ActorAuditLogs")
+  targetAuditLogs AuditLog[] @relation("TargetAuditLogs")
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  @@index([role])
+}
+
+model Session {
+  id               String   @id @default(cuid())
+  userId           String
+  sessionTokenHash String   @unique
+  expiresAt        DateTime
+  userAgent        String?
+  ipAddress        String?
+  createdAt        DateTime @default(now())
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model PasswordResetCode {
+  id         String   @id @default(cuid())
+  email      String
+  codeHash   String
+  expiresAt  DateTime
+  usedAt     DateTime?
+  createdAt  DateTime @default(now())
+
+  @@index([email])
+  @@index([expiresAt])
+}
+
+model Game {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  // Float used for simplicity; production apps should use Decimal and handle serialization
+  price       Float
+  genre       Genre
+  publisher   String
+  releaseYear Int
+  stock       Int      @default(100)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  orders      Order[]
+  reviews     Review[]
+
+  @@index([genre])
+  @@index([isActive])
+}
+
+model Order {
+  id         String      @id @default(cuid())
+  userId     String
+  gameId     String
+  groupId    String?
+  quantity   Int         @default(1)
+  unitPrice  Float
+  totalPrice Float
+  discountAmount Float   @default(0)
+  promotionName String?
+  status     OrderStatus @default(PENDING)
+  address    String?
+  phone      String?
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  game       Game        @relation(fields: [gameId], references: [id])
+
+  @@index([userId])
+  @@index([gameId])
+  @@index([groupId])
+  @@index([status])
+}
+
+model Promotion {
+  id               String   @id @default(cuid())
+  name             String   @unique
+  minDistinctGames Int      @default(2)
+  discountPercent  Float    @default(10)
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  userId    String
+  gameId    String
+  rating    Int
+  comment   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  game      Game     @relation(fields: [gameId], references: [id])
+
+  // One review per user per game — enforced at DB level
+  @@unique([userId, gameId])
+  @@index([gameId])
+}
+
+// AuditLog.action uses String (not enum) for extensibility without schema migrations
+model AuditLog {
+  id           String   @id @default(cuid())
+  action       String
+  success      Boolean
+  actorUserId  String?
+  targetUserId String?
+  ipAddress    String?
+  userAgent    String?
+  requestId    String?
+  details      Json?
+  createdAt    DateTime @default(now())
+  actorUser    User?    @relation("ActorAuditLogs", fields: [actorUserId], references: [id], onDelete: SetNull)
+  targetUser   User?    @relation("TargetAuditLogs", fields: [targetUserId], references: [id], onDelete: SetNull)
+
+  @@index([action])
+  @@index([actorUserId])
+  @@index([createdAt])
+}
+
+model Faq {
+  id        Int      @id @default(autoincrement())
+  question  String
+  answer    String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("faq")
+}
+
+model SystemSetting {
+  key       String   @id
+  value     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
