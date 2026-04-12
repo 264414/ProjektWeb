@@ -25,7 +25,7 @@ services:
       PORT: 4000
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/secure_ai_demo?schema=public
       CLIENT_ORIGINS: https://31.97.72.66,https://extreme-group.pl,https://www.extreme-group.pl,http://localhost:6080,http://31.97.72.66:6080
-      COOKIE_SIGNING_SECRET: ${COOKIE_SIGNING_SECRET:-change-me-min-32-characters}
+      COOKIE_SIGNING_SECRET: ${COOKIE_SIGNING_SECRET:-change-me-with-at-least-32-characters-1234567890}
       COOKIE_SECURE: "true"
       COOKIE_DOMAIN: ""
       SESSION_TTL_HOURS: "24"
@@ -35,8 +35,9 @@ services:
       RECAPTCHA_PROJECT_ID: projekt-492819
       RECAPTCHA_SITE_KEY: 6LdFV68sAAAAAAaRL-r44RHRz0-ba-4olFMzai4
       RECAPTCHA_LOGIN_ACTION: login
-      RECAPTCHA_MIN_SCORE: "0.5"
-      RECAPTCHA_ENABLED: "false"
+      RECAPTCHA_MIN_SCORE: "0.7"
+      RECAPTCHA_ENABLED: "true"
+      RECAPTCHA_ENFORCE_HOST: 31.97.72.66
     depends_on:
       postgres:
         condition: service_healthy
@@ -46,7 +47,8 @@ services:
       context: ./client
       args:
         VITE_BASE_PATH: /Projekt/
-        VITE_RECAPTCHA_ENABLED: "false"
+        VITE_RECAPTCHA_ENABLED: "true"
+        VITE_RECAPTCHA_ENFORCE_HOST: 31.97.72.66
         VITE_RECAPTCHA_SITE_KEY: 6LdFV68sAAAAAAaRL-r44RHRz0-ba-4olFMzai4
     container_name: projekt-nginx
     restart: unless-stopped

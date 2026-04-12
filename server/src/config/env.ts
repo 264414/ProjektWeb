@@ -26,6 +26,7 @@ const envSchema = z.object({
   RECAPTCHA_SITE_KEY: z.string().optional(),
   RECAPTCHA_LOGIN_ACTION: z.string().default('login'),
   RECAPTCHA_MIN_SCORE: z.coerce.number().min(0).max(1).default(0.5),
+  RECAPTCHA_ENFORCE_HOST: z.string().optional(),
   SMTP_HOST: z.string().optional(),
   SMTP_PORT: z.coerce.number().int().min(1).max(65535).optional(),
   SMTP_USER: z.string().optional(),

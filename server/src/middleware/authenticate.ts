@@ -36,7 +36,7 @@ export async function authenticate(request: Request, response: Response, next: N
   });
 
   if (!session) {
-    response.clearCookie(SESSION_COOKIE_NAME, getClearSessionCookieOptions());
+    response.clearCookie(SESSION_COOKIE_NAME, getClearSessionCookieOptions(request));
     next(new HttpError(401, 'Authentication required.'));
     return;
   }
@@ -49,7 +49,7 @@ export async function authenticate(request: Request, response: Response, next: N
       }
     });
 
-    response.clearCookie(SESSION_COOKIE_NAME, getClearSessionCookieOptions());
+    response.clearCookie(SESSION_COOKIE_NAME, getClearSessionCookieOptions(request));
     next(new HttpError(401, 'Session expired.'));
     return;
   }

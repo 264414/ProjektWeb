@@ -3,17 +3,17 @@ import type { NextFunction, Request, Response } from 'express';
 import { HttpError } from '../lib/http-error';
 import { CSRF_COOKIE_NAME, getClearCsrfCookieOptions, getCsrfCookieOptions } from '../lib/cookies';
 
-export function issueCsrfToken(response: Response): string {
+export function issueCsrfToken(request: Request, response: Response): string {
   const token = crypto.randomBytes(32).toString('base64url');
 
   // Signed cookies detect tampering while the mirrored header blocks cross-site form posts.
-  response.cookie(CSRF_COOKIE_NAME, token, getCsrfCookieOptions());
+  response.cookie(CSRF_COOKIE_NAME, token, getCsrfCookieOptions(request));
 
   return token;
 }
 
-export function clearCsrfCookie(response: Response): void {
-  response.clearCookie(CSRF_COOKIE_NAME, getClearCsrfCookieOptions());
+export function clearCsrfCookie(request: Request, response: Response): void {
+  response.clearCookie(CSRF_COOKIE_NAME, getClearCsrfCookieOptions(request));
 }
 
 export function csrfProtect(request: Request, _response: Response, next: NextFunction): void {

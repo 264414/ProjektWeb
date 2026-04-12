@@ -54,10 +54,6 @@ const passwordResetRateLimit = rateLimit({
   }
 });
 
-function isIpv4Host(hostname: string): boolean {
-  return /^(?:\d{1,3}\.){3}\d{1,3}$/.test(hostname);
-}
-
 function hashResetCode(code: string): string {
   return crypto.createHash('sha256').update(code).digest('hex');
 }
@@ -65,7 +61,7 @@ function hashResetCode(code: string): string {
 router.get(
   '/csrf-token',
   asyncHandler(async (request, response) => {
-    const csrfToken = issueCsrfToken(response);
+    const csrfToken = issueCsrfToken(request, response);
 
     await writeAuditLog({
       action: 'AUTH_CSRF_ISSUED',
@@ -135,7 +131,7 @@ router.post(
     });
 
     await attachSessionCookie(response, request, user.id);
-    const csrfToken = issueCsrfToken(response);
+    const csrfToken = issueCsrfToken(request, response);
 
     await writeAuditLog({
       action: 'AUTH_REGISTER_SUCCESS',
@@ -166,33 +162,50 @@ router.post(
       recaptchaToken?: string;
     };
 
-    const recaptchaBypassedForIpHost = isIpv4Host(request.hostname);
+    const shouldVerifyRecaptcha =
+      config.RECAPTCHA_ENABLED &&
+      (!config.RECAPTCHA_ENFORCE_HOST || request.hostname === config.RECAPTCHA_ENFORCE_HOST);
 
-    if (!recaptchaBypassedForIpHost) {
-      const recaptchaResult = await verifyRecaptchaToken(recaptchaToken ?? '', config.RECAPTCHA_LOGIN_ACTION);
-      if (!recaptchaResult.success) {
+    if (shouldVerifyRecaptcha) {
+      const token = recaptchaToken?.trim();
+
+      if (token) {
+        const recaptchaResult = await verifyRecaptchaToken(token, config.RECAPTCHA_LOGIN_ACTION);
+        if (!recaptchaResult.success) {
+          await writeAuditLog({
+            action: 'AUTH_LOGIN_FAILURE',
+            success: false,
+            request,
+            details: {
+              email: maskEmail(email),
+              reason: 'recaptcha_failed',
+              recaptchaScore: recaptchaResult.score,
+              recaptchaFailureReason: recaptchaResult.reason
+            }
+          });
+
+          throw new HttpError(403, 'Login blocked by reCAPTCHA verification.');
+        }
+      } else {
         await writeAuditLog({
-          action: 'AUTH_LOGIN_FAILURE',
-          success: false,
+          action: 'AUTH_LOGIN_RECAPTCHA_SKIPPED_MISSING_TOKEN',
+          success: true,
           request,
           details: {
             email: maskEmail(email),
-            reason: 'recaptcha_failed',
-            recaptchaScore: recaptchaResult.score,
-            recaptchaFailureReason: recaptchaResult.reason
+            host: request.hostname
           }
         });
-
-        throw new HttpError(403, 'Login blocked by reCAPTCHA verification.');
       }
-    } else {
+    } else if (config.RECAPTCHA_ENABLED) {
       await writeAuditLog({
-        action: 'AUTH_LOGIN_RECAPTCHA_BYPASSED_IP_HOST',
+        action: 'AUTH_LOGIN_RECAPTCHA_SKIPPED_HOST_SCOPE',
         success: true,
         request,
         details: {
           email: maskEmail(email),
-          host: request.hostname
+          host: request.hostname,
+          enforceHost: config.RECAPTCHA_ENFORCE_HOST ?? null
         }
       });
     }
@@ -223,7 +236,7 @@ router.post(
     }
 
     await attachSessionCookie(response, request, user.id);
-    const csrfToken = issueCsrfToken(response);
+    const csrfToken = issueCsrfToken(request, response);
 
     await writeAuditLog({
       action: 'AUTH_LOGIN_SUCCESS',
@@ -345,9 +358,9 @@ router.post(
       }
     });
 
-    response.clearCookie(SESSION_COOKIE_NAME, getClearSessionCookieOptions());
-    clearCsrfCookie(response);
-    const csrfToken = issueCsrfToken(response);
+    response.clearCookie(SESSION_COOKIE_NAME, getClearSessionCookieOptions(request));
+    clearCsrfCookie(request, response);
+    const csrfToken = issueCsrfToken(request, response);
 
     await writeAuditLog({
       action: 'AUTH_LOGOUT',
@@ -414,9 +427,9 @@ router.post(
       })
     ]);
 
-    response.clearCookie(SESSION_COOKIE_NAME, getClearSessionCookieOptions());
-    clearCsrfCookie(response);
-    const csrfToken = issueCsrfToken(response);
+    response.clearCookie(SESSION_COOKIE_NAME, getClearSessionCookieOptions(request));
+    clearCsrfCookie(request, response);
+    const csrfToken = issueCsrfToken(request, response);
 
     await writeAuditLog({
       action: 'AUTH_PASSWORD_CHANGE',

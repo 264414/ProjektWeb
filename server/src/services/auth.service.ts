@@ -28,7 +28,7 @@ export function serializeUser(user: {
 // Raw token is NOT stored; only its SHA-256 hash is persisted in the sessions table
 export async function attachSessionCookie(response: Response, request: Request, userId: string): Promise<void> {
   const session = await createSession(userId, request);
-  response.cookie(SESSION_COOKIE_NAME, session.token, getSessionCookieOptions());
+  response.cookie(SESSION_COOKIE_NAME, session.token, getSessionCookieOptions(request));
 }
 
 export async function getUserForClient(userId: string) {

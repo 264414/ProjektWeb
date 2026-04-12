@@ -21,8 +21,9 @@ export function LoginPage() {
     () => import.meta.env.VITE_RECAPTCHA_SITE_KEY ?? '6LdFV68sAAAAAAaRL-r44RHRz0-ba-4olFMzai4',
     []
   );
+  const recaptchaEnforceHost = useMemo(() => import.meta.env.VITE_RECAPTCHA_ENFORCE_HOST ?? '31.97.72.66', []);
   const [recaptchaReady, setRecaptchaReady] = useState(false);
-  const isIpHost = useMemo(() => /^(?:\d{1,3}\.){3}\d{1,3}$/.test(window.location.hostname), []);
+  const isProtectedRecaptchaHost = useMemo(() => window.location.hostname === recaptchaEnforceHost, [recaptchaEnforceHost]);
   const navigate = useNavigate();
   const location = useLocation();
   const currentUserQuery = useCurrentUser();
@@ -66,7 +67,7 @@ export function LoginPage() {
   }
 
   useEffect(() => {
-    if (isIpHost || !recaptchaEnabled) {
+    if (!recaptchaEnabled || !isProtectedRecaptchaHost) {
       setRecaptchaReady(true);
       return;
     }
@@ -74,7 +75,7 @@ export function LoginPage() {
     void loadRecaptchaScript('google').catch(async () => {
       await loadRecaptchaScript('recaptcha').catch(() => undefined);
     });
-  }, [isIpHost, recaptchaEnabled, recaptchaSiteKey]);
+  }, [isProtectedRecaptchaHost, recaptchaEnabled, recaptchaSiteKey]);
 
   async function getRecaptchaToken(): Promise<string> {
     const tryExecute = async (): Promise<string> => {
@@ -147,21 +148,18 @@ export function LoginPage() {
           <form
             className="space-y-5"
             onSubmit={form.handleSubmit(async (values) => {
-              try {
-                if (isIpHost || !recaptchaEnabled) {
-                  loginMutation.mutate({ ...values, recaptchaToken: '' });
-                  return;
-                }
+              let token = '';
 
-                const token = await getRecaptchaToken();
-                form.setValue('recaptchaToken', token, { shouldValidate: true });
-                loginMutation.mutate({ ...values, recaptchaToken: token });
-              } catch {
-                form.setError('root', {
-                  type: 'manual',
-                  message: 'Nie mozna pobrac tokena reCAPTCHA. Sprobuj ponownie.'
-                });
+              if (recaptchaEnabled && isProtectedRecaptchaHost && recaptchaReady) {
+                try {
+                  token = await getRecaptchaToken();
+                } catch {
+                  token = '';
+                }
               }
+
+              form.setValue('recaptchaToken', token, { shouldValidate: true });
+              loginMutation.mutate({ ...values, recaptchaToken: token });
             })}
           >
             <input type="hidden" {...form.register('recaptchaToken')} />
@@ -200,7 +198,7 @@ export function LoginPage() {
 
             <button 
               className="w-full mt-8 py-4 rounded-2xl bg-gradient-to-r from-primary to-primary-dim text-on-primary font-bold text-lg shadow-xl shadow-primary/20 hover:shadow-primary/40 hover:-translate-y-1 active:translate-y-0 transition-all flex items-center justify-center gap-2 group disabled:opacity-50" 
-              disabled={loginMutation.isPending || (!recaptchaReady && !isIpHost && recaptchaEnabled)} 
+              disabled={loginMutation.isPending} 
               type="submit"
             >
               {loginMutation.isPending ? 'Autoryzacja...' : 'Zaloguj się'}
@@ -209,7 +207,7 @@ export function LoginPage() {
             {form.formState.errors.root?.message && (
               <p className="text-error text-xs font-bold text-center">{form.formState.errors.root.message}</p>
             )}
-            {!recaptchaReady && !isIpHost && recaptchaEnabled && (
+            {!recaptchaReady && isProtectedRecaptchaHost && recaptchaEnabled && (
               <p className="text-on-surface-variant text-xs text-center">Ladowanie zabezpieczenia reCAPTCHA...</p>
             )}
             <div className="text-right -mt-1">
