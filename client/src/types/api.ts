@@ -46,6 +46,11 @@ export interface OrderUser {
   id: string;
   fullName: string;
   email: string;
+  role?: Role;
+  team?: {
+    id: string;
+    name: string;
+  } | null;
 }
 
 export interface Order {
@@ -64,6 +69,35 @@ export interface Order {
   createdAt: string;
   updatedAt: string;
   game?: OrderGame;
+  user?: OrderUser;
+}
+
+export type RequestStatus = OrderStatus;
+export type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH';
+
+export interface ProjectRequest {
+  id: string;
+  userId: string;
+  title: string;
+  description: string;
+  businessJustification: string;
+  requestedBudget: number;
+  riskLevel: RiskLevel;
+  status: RequestStatus;
+  createdAt: string;
+  updatedAt: string;
+  user?: OrderUser;
+}
+
+export interface LeaveRequest {
+  id: string;
+  userId: string;
+  startDate: string;
+  endDate: string;
+  reason: string;
+  status: RequestStatus;
+  createdAt: string;
+  updatedAt: string;
   user?: OrderUser;
 }
 
